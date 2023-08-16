@@ -98,11 +98,11 @@ CREATE TABLE [dbo].[supplier](
 ) ON [PRIMARY]
 GO
 
-BULK INSERT part FROM '/memverge/home/bhanus/Projects/TPC-H-Dataset-Generator-MS-SQL-Server/dbgen/part.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
-BULK INSERT customer FROM '/memverge/home/bhanus/Projects/TPC-H-Dataset-Generator-MS-SQL-Server/dbgen/customer.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
-BULK INSERT orders FROM '/memverge/home/bhanus/Projects/TPC-H-Dataset-Generator-MS-SQL-Server/dbgen/orders.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
-BULK INSERT partsupp FROM '/memverge/home/bhanus/Projects/TPC-H-Dataset-Generator-MS-SQL-Server/dbgen/partsupp.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
-BULK INSERT supplier FROM '/memverge/home/bhanus/Projects/TPC-H-Dataset-Generator-MS-SQL-Server/dbgen/supplier.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
-BULK INSERT lineitem FROM '/memverge/home/bhanus/Projects/TPC-H-Dataset-Generator-MS-SQL-Server/dbgen/lineitem.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
-BULK INSERT nation FROM '/memverge/home/bhanus/Projects/TPC-H-Dataset-Generator-MS-SQL-Server/dbgen/nation.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
-BULK INSERT region FROM '/memverge/home/bhanus/Projects/TPC-H-Dataset-Generator-MS-SQL-Server/dbgen/region.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
+BULK INSERT part FROM '/data/tpch-data/part.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
+BULK INSERT customer FROM '/data/tpch-data/customer.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
+BULK INSERT orders FROM '/data/tpch-data/orders.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
+BULK INSERT partsupp FROM '/data/tpch-data/partsupp.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
+BULK INSERT supplier FROM '/data/tpch-data/supplier.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
+BULK INSERT lineitem FROM '/data/tpch-data/lineitem.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
+BULK INSERT nation FROM '/data/tpch-data/nation.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
+BULK INSERT region FROM '/data/tpch-data/region.tbl' WITH (TABLOCK, DATAFILETYPE='char', CODEPAGE='raw', FIELDTERMINATOR = '|')
