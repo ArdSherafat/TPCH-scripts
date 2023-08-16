@@ -1,22 +1,91 @@
 #!/bin/bash
 
+# Read the OS ID and version from /etc/os-release
+os_id=$(grep -w ID /etc/os-release | cut -d'=' -f2 | tr -d '"')
+version_id=$(grep -w VERSION_ID /etc/os-release | cut -d'=' -f2 | tr -d '"' | cut -d'.' -f1)
+ 
+# Determine the package manager
+if command -v apt >/dev/null 2>&1; then
+    sudo apt update
+    pkg_manager="apt"
+elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf check-update
+    pkg_manager="dnf"
+elif command -v yum >/dev/null 2>&1; then
+    sudo yum check-update
+    pkg_manager="yum"
+else
+    echo "[ERROR] Package manager not found. Cannot install"
+    exit 1
+fi
+
 # Docker install for Ubuntu
 function install-docker()
 {
     if ! command -v docker &>/dev/null; then
-        for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
-        sudo apt install ca-certificates curl gnupg
-        sudo install -m 0755 -d /etc/apt/keyrings
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-        sudo chmod a+r /etc/apt/keyrings/docker.gpg
-        echo \
-          "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-          "$(. /etc/os-release && echo "${VERSION_CODENAME}")" stable" | \
-          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-        sudo apt update
-        sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        if [ ${os_id} = "fedora" ]; then
+            sudo dnf remove docker \
+                  docker-client \
+                  docker-client-latest \
+                  docker-common \
+                  docker-latest \
+                  docker-latest-logrotate \
+                  docker-logrotate \
+                  docker-selinux \
+                  docker-engine-selinux \
+                  docker-engine
 
-        sudo docker info -f '{{ .DockerRootDir}}'
+            sudo dnf -y install dnf-plugins-core
+            sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+            sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            sudo systemctl start docker
+            sudo docker info -f '{{ .DockerRootDir}}'
+
+        elif [ ${os_id} = "rhel" ]; then
+            sudo yum remove docker \
+                    docker-client \
+                    docker-client-latest \
+                    docker-common \
+                    docker-latest \
+                    docker-latest-logrotate \
+                    docker-logrotate \
+                    docker-engine \
+                    podman \
+                    runc
+            sudo yum install -y yum-utils
+            sudo yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+            sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            sudo systemctl start docker
+            sudo docker info -f '{{ .DockerRootDir}}'
+
+        elif [ ${os_id} = "centos" ]; then 
+            sudo yum remove docker \
+                    docker-client \
+                    docker-client-latest \
+                    docker-common \
+                    docker-latest \
+                    docker-latest-logrotate \
+                    docker-logrotate \
+                    docker-engine   
+            sudo yum install -y yum-utils
+            sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+            sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            sudo systemctl start docker
+
+        elif [ ${os_id} = "ubuntu" ]; then
+            for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
+            sudo apt install ca-certificates curl gnupg
+            sudo install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+            echo \
+            "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            "$(. /etc/os-release && echo "${VERSION_CODENAME}")" stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt update
+            sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            sudo docker info -f '{{ .DockerRootDir}}'
+        fi
     fi
 }
 

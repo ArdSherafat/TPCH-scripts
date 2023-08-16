@@ -109,13 +109,14 @@ function load-data()
     
 }
 
-function test-mssql() {
+function check-mssql() {
     # Check if mssql container is running
     if ! sudo docker ps | grep -q mssql; then
         echo "MSSQL container is not running!"
         exit 1
     fi
 
+    echo "Checking for the existance of tables"
     # List of queries
     declare -a queries=(
         "USE TPCH; SELECT COUNT(*) FROM customer;"
@@ -130,28 +131,31 @@ function test-mssql() {
 
     for query in "${queries[@]}"; do
         if ! sudo docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -Q "$query"; then
-            echo "Failed to read the tables: $query"
+            echo "Failed to read the table: $query"
             exit 1
         fi
     done
 
-    echo "All queries executed successfully!"
+    echo "All the tables are found!"
     return 0
 }
 
 function power-test() 
 {
-    if [ -z ${POWERTEST} ];
+    if [ -z ${POWER_TEST} ];
     then
         return
     fi
+
+    local NUM_RUNS=3 # Set your desired number of runs here
+
     echo "Runnung TPC-H Power test..."
     # Create the CSV file with headers
-    echo "Run,q14,q2,q9,q20,q6,q17,q18,q8,q21,q13,q3,q22,q16,q4,q11,q15,q1,q10,q19,q5,q7,q12,Total,Percentage Deviation" > temp.csv
+    echo "Run,q14,q2,q9,q20,q6,q17,q18,q8,q21,q13,q3,q22,q16,q4,q11,q15,q1,q10,q19,q5,q7,q12,Total,Percentage Deviation" > tmp.csv
 
     declare -a total_times
 
-    for i in $(seq 1 3); do
+    for i in $(seq 1 $NUM_RUNS); do
         total_time_for_run=0
 
         # Begin the row with the run number
@@ -184,7 +188,7 @@ function power-test()
         row="${row},${total_time_for_run}"
 
         # Write the row to the CSV file
-        echo "${row}" >> temp.csv
+        echo "${row}" >> tmp.csv
     done
 
     # Calculate standard deviation
@@ -205,10 +209,10 @@ function power-test()
     # Add percentage deviation to the CSV
     for t in "${total_times[@]}"; do
         percentage_deviation=$(echo "scale=2; (($t - $mean) * 100) / $mean" | bc -l)
-        sed -i "/${t}$/s/$/,${percentage_deviation}%/" temp.csv
+        sed -i "/${t}$/s/$/,${percentage_deviation}%/" tmp.csv
     done
 
-    echo "Standard Deviation of total_time_for_run: $stdev"
+    # echo "Standard Deviation of total_time_for_run: $stdev"
 
     awk '
     BEGIN { FS=OFS="," }
@@ -226,10 +230,93 @@ function power-test()
             }
             print str
         }
-    }' temp.csv > powertest.csv
-    sudo rm temp.csv
+    }' tmp.csv > powertest.csv
+    sudo rm tmp.csv
     echo "DONE"
 }
+
+
+function throughput-test()
+{
+    if [ -z ${THROUGHPUT_TEST} ];
+    then
+        return
+    fi
+
+    echo "Runnung TPC-H Throughput test..."
+
+    arr1=(21 3 18 5 11 7 6 20 17 12 16 15 13 10 2 8 14 19 9 22 1 4) 
+    arr2=(6 17 14 16 19 10 9 2 15 8 5 22 12 7 13 18 1 4 20 3 11 21)
+    arr3=(8 5 4 6 17 7 1 18 22 14 9 10 15 11 20 2 21 19 13 16 12 3) 
+    arr4=(5 21 14 19 15 17 12 6 4 9 8 16 11 2 10 18 1 13 7 22 3 20) 
+    arr5=(21 15 4 6 7 16 19 18 14 22 11 13 3 1 2 5 8 20 12 17 10 9) 
+    arr6=(10 3 15 13 6 8 9 7 4 11 22 18 12 1 5 16 2 14 19 20 17 21) 
+    arr7=(18 8 20 21 2 4 22 17 1 11 9 19 3 13 5 7 10 16 6 14 15 12)
+    arr8=(19 1 15 17 5 8 9 12 14 7 4 3 20 16 6 22 10 13 2 21 18 11) 
+    arr9=(8 13 2 20 17 3 6 21 18 11 19 10 15 4 22 1 7 12 9 14 5 16) 
+    arr10=(6 15 18 17 12 1 7 2 22 13 21 10 14 9 3 16 20 19 11 4 8 5)
+    arr11=(15 14 18 17 10 20 16 11 1 8 4 22 5 12 3 9 21 2 13 6 19 7) 
+    arr12=(1 7 16 17 18 22 12 6 8 9 11 4 2 5 20 21 13 10 19 3 14 15)
+    arr13=(21 17 7 3 1 10 12 22 9 16 6 11 2 4 5 14 8 20 13 18 15 19)
+    arr14=(2 9 5 4 18 1 20 15 16 17 7 21 13 14 19 8 22 11 10 3 12 6) 
+    arr15=(16 9 17 8 14 11 10 12 6 21 7 3 15 5 22 20 1 13 19 2 4 18) 
+    arr16=(1 3 6 5 2 16 14 22 17 20 4 9 10 11 15 8 12 19 18 13 7 21) 
+    arr17=(3 16 5 11 21 9 2 15 10 18 17 7 8 19 14 13 1 4 22 20 6 12) 
+    arr18=(14 4 13 5 21 11 8 6 3 17 2 20 1 19 10 9 12 18 15 7 22 16)
+    arr19=(4 12 22 14 5 15 16 2 8 10 17 9 21 7 3 6 13 18 11 20 19 1) 
+    arr20=(16 15 14 13 4 22 18 19 7 1 12 17 5 10 20 3 9 21 11 2 6 8) 
+    arr21=(20 14 21 12 15 17 4 19 13 10 11 1 16 5 18 7 8 22 9 6 3 2) 
+    arr22=(16 14 13 2 21 10 11 4 1 22 18 12 19 5 7 8 6 3 15 20 9 17) 
+    arr23=(18 15 9 14 12 2 8 11 22 21 16 1 6 17 5 10 19 4 20 13 3 7) 
+    arr24=(7 3 10 14 13 21 18 6 20 4 9 8 22 15 2 1 5 12 19 17 11 16) 
+    arr25=(18 1 13 7 16 10 14 2 19 5 21 11 22 15 8 17 20 3 4 12 6 9) 
+    arr26=(13 2 22 5 11 21 20 14 7 10 4 9 19 18 6 3 1 8 15 12 17 16) 
+    arr27=(14 17 21 8 2 9 6 4 5 13 22 7 15 3 1 18 16 11 10 12 20 19) 
+    arr28=(10 22 1 12 13 18 21 20 2 14 16 7 15 3 4 17 5 19 6 8 9 11) 
+    arr29=(10 8 9 18 12 6 1 5 20 11 17 22 16 3 13 2 15 21 14 19 7 4) 
+    arr30=(7 17 22 5 3 10 13 18 9 1 14 15 21 19 16 12 8 6 11 20 4 2) 
+    arr31=(2 9 21 3 4 7 1 11 16 5 20 19 18 8 17 13 10 12 15 6 14 22) 
+    arr32=(15 12 8 4 22 13 16 17 18 3 7 5 6 1 9 11 21 10 14 20 19 2) 
+    arr33=(15 16 2 11 17 7 5 14 20 4 21 3 10 9 12 8 13 6 18 19 22 1)
+    arr34=(1 13 11 3 4 21 6 14 15 22 18 9 7 5 10 20 12 16 17 8 19 2) 
+    arr35=(14 17 22 20 8 16 5 10 1 13 2 21 12 9 4 18 3 7 6 19 15 11) 
+    arr36=(9 17 7 4 5 13 21 18 11 3 22 1 6 16 20 14 15 10 8 2 12 19) 
+    arr37=(13 14 5 22 19 11 9 6 18 15 8 10 7 4 17 16 3 1 12 2 21 20) 
+    arr38=(20 5 4 14 11 1 6 16 8 22 7 3 2 12 21 19 17 13 10 15 18 9) 
+    arr39=(3 7 14 15 6 5 21 20 18 10 4 16 19 1 13 9 8 17 11 12 22 2) 
+    arr40=(13 15 17 1 22 11 3 4 7 20 14 21 9 8 2 18 16 6 10 12 5 19)
+
+    for i in $(seq 1 4); do
+        total_time_for_run=0
+
+        # Begin the row with the run number
+        row="Run ${i}"
+        array_name="arr${i}[@]"
+        for q in "${!array_name}"; do
+            # Capture start time
+            start=$(date +%s%3N)
+
+            # Run query
+            sudo docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -d TPCH -i /data/tpch-data/generated_queries/${q}/0.sql >/dev/null
+
+            # Capture end time and calculate query time
+            endt=$(date +%s%3N)
+            query_time=$((endt - start))
+            total_time_for_run=$((total_time_for_run + query_time))
+
+            # Append query time to the current row
+            row="${row},${query_time}"
+        done
+        # Store this run's total time
+        total_times+=($total_time_for_run)
+        # Append the total time for this run to the current row
+        row="${row},${total_time_for_run}"
+        echo "${row}"
+        # Write the row to the CSV file
+        echo "${row}" >> tmp.csv
+    done
+    
+} 
 
 
 function print_usage()
@@ -237,7 +324,8 @@ function print_usage()
     echo "      -d                    : generate data - scale d"
     echo "      -q                    : generate query - number of queries q"
     echo "      -l                    : load the data into dataset"
-    echo "      -p                    : run the power test"
+    echo "      -p                    : run the Power test"
+    echo "      -t                    : run the Throughput Test "
 }
 
 
@@ -261,6 +349,9 @@ while getopts 'd:q:pl' opt; do
        ;;
        p)
            POWER_TEST=1
+       ;;
+       t)
+           THROUGHPUT_TEST=1
        ;;       
        ?|h)
            print_usage
@@ -274,5 +365,6 @@ generate-data
 generate-queries
 start-mssql
 load-data
-test-mssql
+check-mssql
 power-test
+throughput-test
