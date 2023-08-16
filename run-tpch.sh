@@ -8,6 +8,7 @@ SCRIPT_DIR_NAME=$( dirname $( readlink -f $0 ))
 DATA_DIR="${SCRIPT_DIR_NAME}/dbgen"
 MSSQL_DATA_DIR="/nvme1/data"
 
+SIZE=0
 
 function wait-for-sql()
 {
@@ -33,33 +34,47 @@ function wait-for-sql()
 
 function generate-data()
 {
-    if [ -z ${SIZE} ];
-    then
-        return
-    fi
 
-    for((i=1;i<=8;i++));
-    do
-       sudo ./dbgen/dbgen -s ${SIZE} -S $i -C 8 -f &
-    done
+    cd dbgen
+    # for((i=1;i<=8;i++));
+    # do
+    #    sudo ./dbgen -s "${SIZE}" -S "${i}" -C 8 -f &
+    # done
+
+    sudo ./dbgen -s "${SIZE}"
+
+    cd ..
 }
 
-function generate-queries()
-{
-    local indices=$1
-    local args_num_queries=$2
+# function generate-queries()
+# {
+#     cd dbgen
+#     export DSS_QUERY=./queries_original
+#     local args_num_queries=2
 
-    for template in $indices; do
-        echo -n "$template "
-        for count in $(seq 0 $(($args_num_queries - 1))); do
-            directory="./generated_queries/${template}/"
-            file_path="${directory}${count}.sql"
-            mkdir -p $directory
-            touch $file_path
-            ./dbgen/qgen ${template} -r $(($count + 1) * 100) -s 100 > $file_path
-        done
-    done
-    echo
+#     NUM_TEMPLATES=22
+#     indices=$(seq 1 $NUM_TEMPLATES)
+
+#     for template in $indices; do
+#         echo -n "$template "
+#         for count in $(seq 0 $(($args_num_queries - 1))); do
+#             directory="${SCRIPT_DIR_NAME}/generated_queries/${template}"
+#             file_path="${directory}/${count}.sql"
+#             mkdir -p "${directory}"
+#             touch "${file_path}"
+#             ./qgen "${template}" -r $((${count} + 1) * 100) -s 100 > "${file_path}"
+#         done
+#     done
+#     echo
+#     cd ..
+# }
+
+unction generate-queries()
+{
+    cd dbgen
+    export DSS_QUERY=./queries_original
+    python3 gen_run_querries.py --num_queries 1 --generate_queries
+    cd ..
 }
 
 
@@ -106,7 +121,7 @@ function print_usage()
 if [ "$#" -eq "0" ];
 then
     print_usage
-    exit 1
+    #exit 1
 fi
 
 
@@ -122,5 +137,5 @@ while getopts 's' opt; do
     esac
 done
 
-generate-data
+# generate-data
 generate-queries

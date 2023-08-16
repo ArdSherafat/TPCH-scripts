@@ -32,21 +32,14 @@ function install-tools()
 }
 
 
-function install-tools()
-{
-  if ! command -v make &>/dev/null; then
-      sudo apt install make
-  fi
-  if ! dpkg -l | grep -q "^ii.*build-essential"; then
-      sudo apt install build-essential
-  fi
-}
-
 function VDH-setup() {
     if [ -z ${VIRTUAL_DRIVE} ];
     then
         return
     fi
+
+    echo "SIZE: ${SIZE}"
+    echo "VIRTUAL_PATH: ${VIRTUAL_PATH}"
 
     local img_path="${VIRTUAL_PATH}/virtual_drive.img"
     data_path=${VIRTUAL_PATH}/data
@@ -70,7 +63,7 @@ function print_usage()
 }
 
 
-while getopts 'vsp' opt; do
+while getopts 'vs:p:' opt; do
     case "$opt" in
        v)
            VIRTUAL_DRIVE=1 
@@ -88,9 +81,10 @@ while getopts 'vsp' opt; do
     esac
 done
 
+
 # Check if -v is activated -s or -p are provided
-if [ "${VIRTUAL_DRIVE}" -eq "1" ]; then
-    if [ -z "${SIZE}" ] || [ -z "${VIRTUAL_PATH}" ]; then
+if [ -n "${VIRTUAL_DRIVE}" ]; then
+    if [[ ( -z ${SIZE} || -z ${VIRTUAL_PATH} ) ]]; then
         echo "Both options -s and -p are required when -v is activated."
         print_usage
         exit 1
@@ -98,10 +92,10 @@ if [ "${VIRTUAL_DRIVE}" -eq "1" ]; then
 fi
 
 sudo apt update
-install-docker
 install-tools
+install-dockers
 VDH-setup
 
-cd TPC-H-Dataset-Generator-MS-SQL-Server/dbgen
+cd dbgen
 sudo make
 cd ..
