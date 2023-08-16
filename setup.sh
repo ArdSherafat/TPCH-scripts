@@ -54,6 +54,13 @@ function VDH-setup() {
     sudo mount "${loop_device}" "${data_path}" || { echo "Failed to mount the virtual drive"; return 1; }
 }
 
+function compile-files()
+{
+    cd dbgen
+    sudo make
+    cd ..
+}
+
 
 function print_usage()
 {
@@ -95,7 +102,4 @@ sudo apt update
 install-tools
 install-dockers
 VDH-setup
-
-cd dbgen
-sudo make
-cd ..
+compile-files
