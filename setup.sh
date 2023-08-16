@@ -100,6 +100,6 @@ fi
 
 sudo apt update
 install-tools
-install-dockers
+install-docker
 VDH-setup
 compile-files
