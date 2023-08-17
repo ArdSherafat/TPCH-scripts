@@ -147,6 +147,52 @@ function check-mssql() {
     return 0
 }
 
+function calculate_variance_and_transpose() {
+    local file_name="$1"
+    local -a total_times=("${@:2}")
+
+    local sum=0
+    for t in "${total_times[@]}"; do
+        sum=$((sum + t))
+    done
+
+    local mean=$(echo "$sum / ${#total_times[@]}" | bc -l)
+    local variance_sum=0
+
+    for t in "${total_times[@]}"; do
+        local diff=$(echo "$t - $mean" | bc -l)
+        local diff_squared=$(echo "$diff^2" | bc -l)
+        variance_sum=$(echo "$variance_sum + $diff_squared" | bc -l)
+    done
+
+    local variance=$(echo "$variance_sum / (${#total_times[@]}-1)" | bc -l) # sample variance
+    local stdev=$(echo "sqrt($variance)" | bc -l)
+
+    for t in "${total_times[@]}"; do
+        local percentage_deviation=$(echo "scale=2; (($t - $mean) * 100) / $mean" | bc -l)
+        sed -i "/${t}$/s/$/,${percentage_deviation}%/" tmp.csv
+    done
+
+    awk '
+    BEGIN { FS=OFS="," }
+    {
+        for (i=1; i<=NF; i++) {
+            a[NR,i] = $i
+        }
+    }
+    NF>p { p=NF }
+    END {
+        for (j=1; j<=p; j++) {
+            str=a[1,j]
+            for (i=2; i<=NR; i++) {
+                str=str OFS a[i,j]
+            }
+            print str
+        }
+    }' tmp.csv > "$file_name"
+    sudo rm tmp.csv
+}
+
 function power-test() 
 {
     if [ -z ${POWER_TEST} ];
@@ -157,7 +203,7 @@ function power-test()
     local NUM_RUNS=3 # Set your desired number of runs here
 
     echo "Runnung TPC-H Power test..."
-    echo "Run,q14,q2,q9,q20,q6,q17,q18,q8,q21,q13,q3,q22,q16,q4,q11,q15,q1,q10,q19,q5,q7,q12,Total,Percentage Deviation" > tmp.csv
+    echo "Run,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,Total,Percentage Deviation" > tmp.csv
 
     declare -a total_times
 
@@ -185,45 +231,8 @@ function power-test()
         row="${row},${total_time_for_run}"
         echo "${row}" >> tmp.csv
     done
-
-    sum=0
-    for t in "${total_times[@]}"; do
-        sum=$((sum + t))
-    done
-    mean=$(echo "$sum / ${#total_times[@]}" | bc -l)
-    variance_sum=0
-    for t in "${total_times[@]}"; do
-        diff=$(echo "$t - $mean" | bc -l)
-        diff_squared=$(echo "$diff^2" | bc -l)
-        variance_sum=$(echo "$variance_sum + $diff_squared" | bc -l)
-    done
-    variance=$(echo "$variance_sum / (${#total_times[@]}-1)" | bc -l) # Corrected for sample variance
-    stdev=$(echo "sqrt($variance)" | bc -l)
-
-    for t in "${total_times[@]}"; do
-        percentage_deviation=$(echo "scale=2; (($t - $mean) * 100) / $mean" | bc -l)
-        sed -i "/${t}$/s/$/,${percentage_deviation}%/" tmp.csv
-    done
-
-    awk '
-    BEGIN { FS=OFS="," }
-    {
-        for (i=1; i<=NF; i++) {
-            a[NR,i] = $i
-        }
-    }
-    NF>p { p=NF }
-    END {
-        for (j=1; j<=p; j++) {
-            str=a[1,j]
-            for (i=2; i<=NR; i++) {
-                str=str OFS a[i,j]
-            }
-            print str
-        }
-    }' tmp.csv > powertest.csv
-    sudo rm tmp.csv
     echo "DONE"
+    calculate_variance_and_transpose "power-test.csv" "${total_times[@]}"
 }
 
 
@@ -235,6 +244,8 @@ function throughput-test()
     fi
 
     echo "Runnung TPC-H Throughput test..."
+    echo "Run,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,Total,Percentage Deviation" > tmp.csv
+
 
     arr1=(21 3 18 5 11 7 6 20 17 12 16 15 13 10 2 8 14 19 9 22 1 4) 
     arr2=(6 17 14 16 19 10 9 2 15 8 5 22 12 7 13 18 1 4 20 3 11 21)
@@ -277,6 +288,8 @@ function throughput-test()
     arr39=(3 7 14 15 6 5 21 20 18 10 4 16 19 1 13 9 8 17 11 12 22 2) 
     arr40=(13 15 17 1 22 11 3 4 7 20 14 21 9 8 2 18 16 6 10 12 5 19)
 
+    declare -a total_times
+
     for i in $(seq 1 4); do
         total_time_for_run=0
         row="Run ${i}"
@@ -294,9 +307,12 @@ function throughput-test()
         done
         total_times+=($total_time_for_run)
         row="${row},${total_time_for_run}"
-        echo "${row}"
+
         echo "${row}" >> tmp.csv
     done
+    echo "DONE"
+    calculate_variance_and_transpose "throughput-test.csv" "${total_times[@]}"
+
 } 
 
 

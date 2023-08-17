@@ -9,6 +9,7 @@ function install-docker()
 {
     if ! command -v docker &>/dev/null; then
         if [ ${os_id} = "fedora" ]; then
+            sudo setenforce 0
             sudo dnf remove docker \
                   docker-client \
                   docker-client-latest \
@@ -19,31 +20,14 @@ function install-docker()
                   docker-selinux \
                   docker-engine-selinux \
                   docker-engine
-
             sudo dnf -y install dnf-plugins-core
             sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
             sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
             sudo systemctl start docker
             sudo docker info -f '{{ .DockerRootDir}}'
 
-        elif [ ${os_id} = "rhel" ]; then
-            sudo yum remove docker \
-                    docker-client \
-                    docker-client-latest \
-                    docker-common \
-                    docker-latest \
-                    docker-latest-logrotate \
-                    docker-logrotate \
-                    docker-engine \
-                    podman \
-                    runc
-            sudo yum install -y yum-utils
-            sudo yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
-            sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-            sudo systemctl start docker
-            sudo docker info -f '{{ .DockerRootDir}}'
-
-        elif [ ${os_id} = "centos" ]; then 
+        elif [[ ${os_id} = "rhel" ]] || [[ ${os_id} = "centos" ]]; then 
+            sudo setenforce 0
             sudo yum remove docker \
                     docker-client \
                     docker-client-latest \
