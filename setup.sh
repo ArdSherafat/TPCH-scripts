@@ -58,6 +58,7 @@ function install-docker()
             sudo systemctl start docker
 
         elif [ ${os_id} = "ubuntu" ]; then
+            sudo apt update
             for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
             sudo apt install ca-certificates curl gnupg
             sudo install -m 0755 -d /etc/apt/keyrings
@@ -175,7 +176,6 @@ if [ -n "${VIRTUAL_DRIVE}" ]; then
     fi
 fi
 
-sudo apt update
 install-tools
 install-docker
 vhd-setup
