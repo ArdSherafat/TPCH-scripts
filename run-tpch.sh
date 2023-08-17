@@ -333,7 +333,7 @@ then
 fi
 
 
-while getopts 'd:q:pl' opt; do
+while getopts 'd:q:plt' opt; do
     case "$opt" in
        d)
            DATA_SIZE=$OPTARG
