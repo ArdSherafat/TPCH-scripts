@@ -116,6 +116,13 @@ function check-mssql() {
         exit 1
     fi
 
+    # Check for the existence of TPCH database
+    DB_CHECK="SELECT name FROM master.sys.databases WHERE name = 'TPCH';"
+    if ! sudo docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -Q "$DB_CHECK" | grep "TPCH"; then
+        echo "TPCH database does not exist."
+        exit 1
+    fi
+
     echo "Checking for the existance of tables"
     # List of queries
     declare -a queries=(

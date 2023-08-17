@@ -83,6 +83,9 @@ function install-tools()
         if ! command -v make >/dev/null 2>&1; then
             sudo apt install make
         fi
+        if ! command -v bc >/dev/null 2>&1; then
+            sudo apt install bc 
+        fi
         if ! dpkg -l | grep -q "^ii.*build-essential"; then
             sudo apt install build-essential
         fi
@@ -92,6 +95,9 @@ function install-tools()
         if ! command -v make >/dev/null 2>&1; then
             sudo dnf install make 
         fi
+        if ! command -v bc >/dev/null 2>&1; then
+            sudo dnf install bc 
+        fi
         if ! dnf group list "Development Tools" | grep -q "Installed"; then
             sudo dnf groupinstall "Development Tools"
         fi
@@ -99,6 +105,9 @@ function install-tools()
         sudo yum check-update
         if ! command -v make >/dev/null 2>&1; then
             sudo yum install make 
+        fi
+        if ! command -v bc >/dev/null 2>&1; then
+            sudo yum install bc 
         fi
         if ! yum group list "Development Tools" | grep -q "Installed"; then
             sudo yum groupinstall "Development Tools"
