@@ -4,21 +4,6 @@
 os_id=$(grep -w ID /etc/os-release | cut -d'=' -f2 | tr -d '"')
 version_id=$(grep -w VERSION_ID /etc/os-release | cut -d'=' -f2 | tr -d '"' | cut -d'.' -f1)
  
-# Determine the package manager
-if command -v apt >/dev/null 2>&1; then
-    sudo apt update
-    pkg_manager="apt"
-elif command -v dnf >/dev/null 2>&1; then
-    sudo dnf check-update
-    pkg_manager="dnf"
-elif command -v yum >/dev/null 2>&1; then
-    sudo yum check-update
-    pkg_manager="yum"
-else
-    echo "[ERROR] Package manager not found. Cannot install"
-    exit 1
-fi
-
 # Docker install for Ubuntu
 function install-docker()
 {
@@ -92,16 +77,39 @@ function install-docker()
 
 function install-tools()
 {
-  if ! command -v make &>/dev/null; then
-      sudo apt install make
-  fi
-  if ! dpkg -l | grep -q "^ii.*build-essential"; then
-      sudo apt install build-essential
-  fi
+    if command -v apt >/dev/null 2>&1; then
+        sudo apt update
+        if ! command -v make >/dev/null 2>&1; then
+            sudo apt install make
+        fi
+        if ! dpkg -l | grep -q "^ii.*build-essential"; then
+            sudo apt install build-essential
+        fi
+
+    elif command -v dnf >/dev/null 2>&1; then
+        sudo dnf check-update
+        if ! command -v make >/dev/null 2>&1; then
+            sudo dnf install make 
+        fi
+        if ! dnf group list "Development Tools" | grep -q "Installed"; then
+            sudo dnf groupinstall "Development Tools"
+        fi
+    elif command -v yum >/dev/null 2>&1; then
+        sudo yum check-update
+        if ! command -v make >/dev/null 2>&1; then
+            sudo yum install make 
+        fi
+        if ! yum group list "Development Tools" | grep -q "Installed"; then
+            sudo yum groupinstall "Development Tools"
+        fi 
+    else
+        echo "[ERROR] Package manager not found. Cannot install"
+        exit 1
+    fi  
 }
 
 
-function VDH-setup() {
+function vhd-setup() {
     if [ -z ${VIRTUAL_DRIVE} ];
     then
         return
@@ -170,5 +178,5 @@ fi
 sudo apt update
 install-tools
 install-docker
-VDH-setup
+vhd-setup
 compile-files

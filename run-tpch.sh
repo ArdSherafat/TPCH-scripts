@@ -150,48 +150,35 @@ function power-test()
     local NUM_RUNS=3 # Set your desired number of runs here
 
     echo "Runnung TPC-H Power test..."
-    # Create the CSV file with headers
     echo "Run,q14,q2,q9,q20,q6,q17,q18,q8,q21,q13,q3,q22,q16,q4,q11,q15,q1,q10,q19,q5,q7,q12,Total,Percentage Deviation" > tmp.csv
 
     declare -a total_times
 
     for i in $(seq 1 $NUM_RUNS); do
         total_time_for_run=0
-
-        # Begin the row with the run number
         row="Run ${i}"
 
         for q in 14 2 9 20 6 17 18 8 21 13 3 22 16 4 11 15 1 10 19 5 7 12; do
 
-            # Capture start time
             start=$(date +%s%3N)
 
-            # Run query
             if ! docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -d TPCH -i /data/tpch-schema/dbgen/generated_queries/${q}/0.sql >/dev/null; then
                 echo "Failed to run query for q${q}. Exiting."
                 return 1
             fi
 
-            # Capture end time and calculate query time
             endt=$(date +%s%3N)
             query_time=$((endt - start))
             total_time_for_run=$((total_time_for_run + query_time))
 
-            # Append query time to the current row
             row="${row},${query_time}"
         done
 
-        # Store this run's total time
         total_times+=($total_time_for_run)
-
-        # Append the total time for this run to the current row
         row="${row},${total_time_for_run}"
-
-        # Write the row to the CSV file
         echo "${row}" >> tmp.csv
     done
 
-    # Calculate standard deviation
     sum=0
     for t in "${total_times[@]}"; do
         sum=$((sum + t))
@@ -206,13 +193,10 @@ function power-test()
     variance=$(echo "$variance_sum / (${#total_times[@]}-1)" | bc -l) # Corrected for sample variance
     stdev=$(echo "sqrt($variance)" | bc -l)
 
-    # Add percentage deviation to the CSV
     for t in "${total_times[@]}"; do
         percentage_deviation=$(echo "scale=2; (($t - $mean) * 100) / $mean" | bc -l)
         sed -i "/${t}$/s/$/,${percentage_deviation}%/" tmp.csv
     done
-
-    # echo "Standard Deviation of total_time_for_run: $stdev"
 
     awk '
     BEGIN { FS=OFS="," }
@@ -288,34 +272,24 @@ function throughput-test()
 
     for i in $(seq 1 4); do
         total_time_for_run=0
-
-        # Begin the row with the run number
         row="Run ${i}"
         array_name="arr${i}[@]"
         for q in "${!array_name}"; do
-            # Capture start time
             start=$(date +%s%3N)
-
-            # Run query
-            sudo docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -d TPCH -i /data/tpch-data/generated_queries/${q}/0.sql >/dev/null
-
-            # Capture end time and calculate query time
+            if ! docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -d TPCH -i /data/tpch-schema/dbgen/generated_queries/${q}/0.sql >/dev/null; then
+                echo "Failed to run query for q${q}. Exiting."
+                return 1
+            fi
             endt=$(date +%s%3N)
             query_time=$((endt - start))
             total_time_for_run=$((total_time_for_run + query_time))
-
-            # Append query time to the current row
             row="${row},${query_time}"
         done
-        # Store this run's total time
         total_times+=($total_time_for_run)
-        # Append the total time for this run to the current row
         row="${row},${total_time_for_run}"
         echo "${row}"
-        # Write the row to the CSV file
         echo "${row}" >> tmp.csv
     done
-    
 } 
 
 
