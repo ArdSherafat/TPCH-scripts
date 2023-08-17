@@ -193,6 +193,23 @@ function calculate_variance_and_transpose() {
     sudo rm tmp.csv
 }
 
+function warm-the-database()
+{
+    if [ -z ${WARM_DB} ];
+    then
+        return
+    fi
+
+    for i in $(seq 1 2); do
+        for q in $(seq 1 22); do
+            if ! docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -d TPCH -i /data/tpch-schema/dbgen/generated_queries/${q}/0.sql >/dev/null; then
+                echo "Failed to run query for q${q}. Exiting."
+                return 1
+            fi
+        done
+    done
+}
+
 function power-test() 
 {
     if [ -z ${POWER_TEST} ];
@@ -290,7 +307,7 @@ function throughput-test()
 
     declare -a total_times
 
-    for i in $(seq 1 4); do
+    for i in $(seq 1 40); do
         total_time_for_run=0
         row="Run ${i}"
         array_name="arr${i}[@]"
@@ -333,13 +350,16 @@ then
 fi
 
 
-while getopts 'd:q:plt' opt; do
+while getopts 'd:q:wplt' opt; do
     case "$opt" in
        d)
            DATA_SIZE=$OPTARG
        ;;
        q)
            QUERY_NUM=$OPTARG
+       ;;
+       w)
+           WARM_DB=1
        ;;
        l)
            LOAD_DATA=1
@@ -363,5 +383,6 @@ generate-queries
 start-mssql
 load-data
 check-mssql
+warm-the-database
 power-test
 throughput-test
