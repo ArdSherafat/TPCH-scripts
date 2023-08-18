@@ -338,6 +338,7 @@ function print_usage()
     echo "      -d                    : generate data - scale d"
     echo "      -q                    : generate query - number of queries q"
     echo "      -l                    : load the data into dataset"
+    echo "      -w                    : warm up the database"
     echo "      -p                    : run the Power test"
     echo "      -t                    : run the Throughput Test "
 }
