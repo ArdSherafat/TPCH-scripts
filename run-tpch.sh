@@ -199,7 +199,7 @@ function warm-the-database()
     then
         return
     fi
-
+    echo "Warming up the database..."
     for i in $(seq 1 2); do
         for q in $(seq 1 22); do
             if ! docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -d TPCH -i /data/tpch-schema/dbgen/generated_queries/${q}/0.sql >/dev/null; then
@@ -208,6 +208,7 @@ function warm-the-database()
             fi
         done
     done
+    echo "DONE"
 }
 
 function power-test() 
@@ -337,7 +338,7 @@ function print_usage()
 {
     echo "      -d                    : generate data - scale d"
     echo "      -q                    : generate query - number of queries q"
-    echo "      -l                    : load the data into dataset"
+    echo "      -l                    : load the data into database"
     echo "      -w                    : warm up the database"
     echo "      -p                    : run the Power test"
     echo "      -t                    : run the Throughput Test "
