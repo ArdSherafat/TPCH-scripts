@@ -89,6 +89,51 @@ function start-mssql()
     wait-for-sql
 }
 
+
+function start-sql-exporter()
+{
+    # Check if sql-exporter container is running
+    if sudo docker ps | grep -q sql-exporter; then
+        echo "SQL-Exporter container is running!"
+        return
+    fi
+
+    echo "Starting SQL-Exporter..."
+    # add sql-exporter image
+    local sql_exporter_image="githubfree/sql_exporter"
+    if [[ -z $(docker images -q "${sql_exporter_image}") ]]; then
+        sudo docker pull "${sql_exporter_image}"
+    fi
+
+    sudo docker run -d -p 9399:9399 --name=sql-exporter -v $(pwd)/cnfs/sql_exporter.yml:/sql_exporter.yml:ro githubfree/sql_exporter:latest
+
+}
+
+#Resource usage and performance characteristics of the running containers
+function start-cadvisor()
+{
+    # Check if sql-exporter container is running
+    if sudo docker ps | grep -q cadvisor; then
+        echo "Cadvisor container is running!"
+        return
+    fi
+
+    echo "Starting Cadvisor..."
+   
+    sudo docker run \
+    --volume=/:/rootfs:ro \
+    --volume=/var/run:/var/run:ro \
+    --volume=/sys:/sys:ro \
+    --volume=/var/lib/docker/:/var/lib/docker:ro \
+    --volume=/dev/disk/:/dev/disk:ro \
+    --publish=8082:8080 \
+    --detach=true \
+    --name=cadvisor \
+    --privileged \
+    --device=/dev/kmsg \
+    gcr.io/cadvisor/cadvisor:v0.47.2
+}
+
 function load-data()
 {
     if [ -z ${LOAD_DATA} ];
@@ -363,6 +408,8 @@ done
 generate-data
 generate-queries
 start-mssql
+start-sql-exporter
+# start-cadvisor
 load-data
 check-mssql
 warm-the-database
