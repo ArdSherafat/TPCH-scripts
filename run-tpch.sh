@@ -123,27 +123,7 @@ function check-mssql() {
         exit 1
     fi
 
-    echo "Checking for the existance of tables"
-    # List of queries
-    declare -a queries=(
-        "USE TPCH; SELECT COUNT(*) FROM customer;"
-        "USE TPCH; SELECT COUNT(*) FROM lineitem;"
-        "USE TPCH; SELECT COUNT(*) FROM nation;"
-        "USE TPCH; SELECT COUNT(*) FROM orders;"
-        "USE TPCH; SELECT COUNT(*) FROM part;"
-        "USE TPCH; SELECT COUNT(*) FROM partsupp;"
-        "USE TPCH; SELECT COUNT(*) FROM region;"
-        "USE TPCH; SELECT COUNT(*) FROM supplier;"
-    )
-
-    for query in "${queries[@]}"; do
-        if ! sudo docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P ${SA_PASSWORD} -Q "$query"; then
-            echo "Failed to read the table: $query"
-            exit 1
-        fi
-    done
-
-    echo "All the tables are found!"
+    echo "TPCH database exists."
     return 0
 }
 

@@ -17,7 +17,7 @@ CREATE TABLE [dbo].[customer](
 ) ON [PRIMARY]
 GO
 CREATE TABLE [dbo].[lineitem](
-    [L_OrderKey] [int] NOT NULL,
+    [L_OrderKey] [bigint] NOT NULL,
     [L_PartKey] [int] NULL,
     [L_SuppKey] [int] NULL,
     [L_LineNumber] [int] NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE [dbo].[nation](
 ) ON [PRIMARY]
 GO
 CREATE TABLE [dbo].[orders](
-    [O_OrderKey] [int] NOT NULL,
+    [O_OrderKey] [bigint] NOT NULL,
     [O_CustKey] [int] NULL,
     [O_OrderStatus] [varchar](64) NULL,
     [O_TotalPrice] [decimal](13, 2) NULL,
