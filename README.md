@@ -1,32 +1,35 @@
 # TPCH-scripts
-Scripts to set up and run the TPC-H benchmark.
+This repository contains scripts to set up and execute the TPC-H benchmark.
 
 ## 1. SETUP
-Run the setup.sh script to install all the necassry tools.
+Execute the setup.sh script to install the necessary tools:
  ```
 sudo ./setup.sh
  ```
 
-Note: MSSQL only supports hard drives with up to 4k physical sector size, check your hard drive physical and logical sector size using the following commands to make sure they are not higher than 4k.
+**Note:** MSSQL supports hard drives with a maximum of 4k physical sector size. Ensure your hard drive's physical and logical sector sizes are not larger than 4k using these commands:
  ```
 lsblk -o NAME,LOG-SEC
 lsblk -o NAME,PHY-SEC
  ```
 
-if higher, use the following command to create a virtual drive on top of your hard drive formatted to xfs and 4k physical and logical sector size.
+If the sizes are greater than 4k, you can use the following options with setup.sh to create a virtual drive formatted to xfs with 4k physical and logical sector sizes:
 ```
       -v                    : create a virtual drive
       -s                    : size of the virtual drive
       -p                    : path for mounting the virtual drive
 ``` 
-Example:
-To create a virtual drive with the size of 10GB in the directory nvme1:
+**Example:**
+To create a 10GB virtual drive mounted to the nvme1 directory, use:
 ```
 sudo ./setup.sh -v -s 10 -p /nvme1
 ```
+For more information about data and query generation, refer to the readme file inside the `dbgen` folder.
 
 ## 2. Running the TPC-H Benchmark
-Run the run-tpch.sh script for generating the data, queries, loading the data into the database and running the benchmarks. (NOTE: Edit the MSSQL_DATA_DIR to specify where the MSSQL Database needs to be stored)
+Execute run-tpch.sh to generate data, queries, load data into the database, and execute benchmarks.
+
+**NOTE:** Modify MSSQL_DATA_DIR in the script to specify where the MSSQL Database should reside.
  ```    
       -d                    : generate data - scale d
       -q                    : generate query - number of queries q
@@ -36,15 +39,16 @@ Run the run-tpch.sh script for generating the data, queries, loading the data in
       -t                    : run the Throughput Test 
  ```
 
- Example:
- To generate 100GB data, 1 set of querries(22 query), load the data into database, warm up the database, and run the power and throughput test
+ **Example:**
+ To generate 100GB of data, a set of queries (22 in total), load the data into the database, warm up the database, and run both the power and throughput tests, use:
  ```
  sudo ./run-tpch.sh -d 100 -q 1 -l -w -p -t
  ```
+ **NOTE:** The resulting database, post data loading, will be approximately 3 times larger than the generated data. Ensure adequate storage space is available.
 
- Running the run-tpch.sh script, will activate the Prometheus SQL Exporter automatically. This exporter exposes metrics gathered from DBMSs, for use by the Prometheus monitoring system through the port 9399. You will need to add this exporter to the Prometheus config file.
- Note: It is assumed that the docker is using the default gateway for the Docker bridge network IP address 172.17.0.1. If changed, the sql_exporter config file needs to be modifeid.
- Example:
+ Executing run-tpch.sh will automatically start the Prometheus SQL Exporter, which exposes metrics from DBMSs for Prometheus monitoring on port 9399. Remember to add this exporter to your Prometheus configuration and adjust the hostname to match your setup:
+
+ **NOTE:** By default, Docker is configured to use the standard gateway for the Docker bridge network, associated with the IP address 172.17.0.1. Should there be any alterations to this setup, the sql_exporter configuration file will require modifications.
  ```
   # sql exporter metrics exporter scrape
   - job_name: “sql-exporter-server"
@@ -60,7 +64,8 @@ Run the run-tpch.sh script for generating the data, queries, loading the data in
  For more information about this exporter, check the following link:
  [Prometheus SQL Exporter](https://github.com/free/sql_exporter)
 
- Additionally, this script comes with the option to start cAdvisor exporter which provides container users an understanding of the resource usage and performance characteristics of their running containers. It is a running daemon that collects, aggregates, processes, and exports information about running containers thorugh the port 8082. You can add this exporter to the Prometheus config file.
+ Additionally, the script provides an option to initiate the cAdvisor exporter, granting insights into container resource utilization and performance. This daemon aggregates and exports data about active containers on port 8082. Add this exporter to your Prometheus configuration and adjust the hostname to match your setup:
+ 
  ```
   # cAdvisor metrics exporter scrape
   - job_name: “cadvisor-server"
