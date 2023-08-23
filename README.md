@@ -2,7 +2,7 @@
 This repository contains scripts to set up and execute the TPC-H benchmark.
 
 ## 1. SETUP
-Execute the setup.sh script to install the necessary tools:
+Execute the `setup.sh` script to install the necessary tools:
  ```
 sudo ./setup.sh
  ```
@@ -27,7 +27,7 @@ sudo ./setup.sh -v -s 10 -p /nvme1
 For more information about data and query generation, refer to the readme file inside the `dbgen` folder.
 
 ## 2. Running the TPC-H Benchmark
-Execute run-tpch.sh to generate data, queries, load data into the database, and execute benchmarks.
+Execute `run-tpch.sh` to generate data, queries, load data into the database, and execute benchmarks.
 
 **NOTE:** Modify MSSQL_DATA_DIR in the script to specify where the MSSQL Database should reside.
  ```    
