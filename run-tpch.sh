@@ -4,7 +4,7 @@ export SA_PASSWORD="Memverge#123"
 
 SCRIPT_DIR_NAME=$( dirname $( readlink -f $0 ))
 DATA_DIR="${SCRIPT_DIR_NAME}/dbgen"
-MSSQL_DATA_DIR="/nvme1/data"
+MSSQL_DATA_DIR="/tpch-benchmark/data"
 
 function wait-for-sql()
 {
@@ -36,6 +36,8 @@ function generate-data()
     fi
     echo "Generating the data..."
     cd dbgen
+
+    # Used for Multithreading - needs to be tested
     # for((i=1;i<=8;i++));
     # do
     #    sudo ./dbgen -s "${DATA_SIZE}" -S "${i}" -C 8 -f &
